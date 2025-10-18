@@ -1,0 +1,49 @@
+adminUser: admin
+adminPassword: admin
+
+service:
+  type: NodePort
+  nodePort: 31000
+
+sidecar:
+  dashboards:
+    enabled: true
+  datasources:
+    enabled: true
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo:3100
+        jsonData:
+          httpMethod: GET
+          tracesToLogs:
+            datasourceUid: 'loki'
+            spanStartTimeShift: '-1h'
+            spanEndTimeShift: '1h'
+            tags: ['job', 'instance', 'pod', 'namespace']
+            mappedTags: [{ key: 'service.name', value: 'service' }]
+            mapTagNamesEnabled: true
+            filterByTraceID: true
+            filterBySpanID: true
+          tracesToMetrics:
+            datasourceUid: 'Prometheus'
+            tags: ['service.name']
+            queries:
+              - name: 'Latency'
+                query: 'histogram_quantile(0.9, sum(rate(http_server_duration_seconds_bucket{service_name="$__service"}[5m])) by (le))'
+          serviceMap:
+            datasourceUid: 'Prometheus'
