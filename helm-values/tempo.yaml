@@ -1,0 +1,14 @@
+tempo:
+  traces:
+    otlp:
+      grpc:
+        enabled: true
+      http:
+        enabled: true
+  storage:
+    trace:
+      backend: local
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
